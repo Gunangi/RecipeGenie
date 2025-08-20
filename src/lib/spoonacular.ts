@@ -202,7 +202,7 @@ export async function searchRecipes(params: URLSearchParams): Promise<RecipeSumm
     let endpoint = 'complexSearch';
     if (localParams.has('includeIngredients') && !query) {
         endpoint = 'findByIngredients';
-        localParams.set('ingredients', local-params.get('includeIngredients')!);
+        localParams.set('ingredients', localParams.get('includeIngredients')!);
         localParams.delete('includeIngredients');
     }
 
