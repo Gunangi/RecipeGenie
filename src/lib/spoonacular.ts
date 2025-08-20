@@ -17,16 +17,18 @@ const getApiKey = () => {
 const cache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 hour
 
-async function fetchWithCache<T>(url: string, tags: string[] = []): Promise<T> {
+async function fetchWithCache<T>(url: string, useCache: boolean = true): Promise<T> {
   const cacheKey = url;
-  const cached = cache.get(cacheKey);
-
-  if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
-    return cached.data as T;
+  if (useCache) {
+    const cached = cache.get(cacheKey);
+    if (cached && (Date.now() - cached.timestamp < CACHE_DURATION_MS)) {
+      return cached.data as T;
+    }
   }
   
-  // Use Next.js's built-in fetch caching, revalidating once per day.
-  const response = await fetch(url, { next: { revalidate: 86400, tags } });
+  // Use Next.js's fetch options to control caching.
+  // 'no-store' forces a new fetch on every request.
+  const response = await fetch(url, { cache: 'no-store' });
   
   if (response.status === 402) { // Payment Required
     console.error("Spoonacular API limit reached. Please check your plan.");
@@ -40,7 +42,9 @@ async function fetchWithCache<T>(url: string, tags: string[] = []): Promise<T> {
   }
 
   const data = await response.json();
-  cache.set(cacheKey, { data, timestamp: Date.now() });
+  if (useCache) {
+    cache.set(cacheKey, { data, timestamp: Date.now() });
+  }
   return data;
 }
 
@@ -128,11 +132,11 @@ const transformToRecipeWithDetails = (recipe: any): RecipeWithDetails => {
 
 export async function getPopularRecipes(): Promise<RecipeSummary[]> {
    const apiKey = getApiKey();
-   // Switched from /random to a cacheable /complexSearch endpoint
-   const url = `${SPOONACULAR_API_URL}/recipes/complexSearch?sort=popularity&number=10&addRecipeInformation=true&apiKey=${apiKey}`;
+   // Using /random endpoint now to get different recipes on each refresh
+   const url = `${SPOONACULAR_API_URL}/recipes/random?number=10&apiKey=${apiKey}`;
    try {
-     const result = await fetchWithCache<{ results: any[] }>(url, ['popular-recipes']);
-     return result.results.map(transformToRecipeSummary);
+     const result = await fetchWithCache<{ recipes: any[] }>(url, false); // No client-side caching
+     return result.recipes.map(transformToRecipeSummary);
    } catch (error) {
      if (error instanceof Error && error.message.includes('API limit reached')) {
         console.warn("Could not fetch popular recipes due to API limit.");
@@ -145,13 +149,13 @@ export async function getPopularRecipes(): Promise<RecipeSummary[]> {
 
 export async function getRecipeOfTheDay(): Promise<RecipeWithDetails | null> {
     const apiKey = getApiKey();
-    // Switched from /random to a cacheable /complexSearch endpoint
-    const url = `${SPOONACULAR_API_URL}/recipes/complexSearch?sort=healthiness&number=1&addRecipeInformation=true&apiKey=${apiKey}`;
+    // Using /random to get a new recipe on each refresh.
+    const url = `${SPOONACULAR_API_URL}/recipes/random?number=1&apiKey=${apiKey}`;
     try {
-        const result = await fetchWithCache<{ results: any[] }>(url, ['recipe-of-the-day']);
-        if (result.results && result.results.length > 0) {
-            // A second call is needed to get full details, which will also be cached.
-            return getRecipeDetails(String(result.results[0].id));
+        const result = await fetchWithCache<{ recipes: any[] }>(url, false); // No client-side caching
+        if (result.recipes && result.recipes.length > 0) {
+            // A second call is needed to get full details, which will be cached on the client
+            return getRecipeDetails(String(result.recipes[0].id));
         }
         return null;
     } catch (error) {
@@ -168,7 +172,8 @@ export async function getRecipeDetails(id: string): Promise<RecipeWithDetails | 
   const apiKey = getApiKey();
   const url = `${SPOONACULAR_API_URL}/recipes/${id}/information?includeNutrition=true&apiKey=${apiKey}`;
   try {
-    const result = await fetchWithCache<any>(url, [`recipe-${id}`]);
+    // We can still use client-side caching for individual recipe pages
+    const result = await fetchWithCache<any>(url, true);
     return transformToRecipeWithDetails(result);
   } catch(error) {
     if (error instanceof Error && error.message.includes('API limit reached')) {
@@ -197,7 +202,7 @@ export async function searchRecipes(params: URLSearchParams): Promise<RecipeSumm
     let endpoint = 'complexSearch';
     if (localParams.has('includeIngredients') && !query) {
         endpoint = 'findByIngredients';
-        localParams.set('ingredients', localParams.get('includeIngredients')!);
+        localParams.set('ingredients', local-params.get('includeIngredients')!);
         localParams.delete('includeIngredients');
     }
 
@@ -205,7 +210,7 @@ export async function searchRecipes(params: URLSearchParams): Promise<RecipeSumm
     const url = `${SPOONACULAR_API_URL}/recipes/${endpoint}?${localParams.toString()}`;
     
     try {
-        const results = await fetchWithCache<any>(url, [`search-${localParams.toString()}`]);
+        const results = await fetchWithCache<any>(url, true); // Cache search results
         const recipes = endpoint === 'complexSearch' ? results.results : results;
         
         // findByIngredients doesn't return full details, so we use the bulk endpoint
@@ -214,7 +219,7 @@ export async function searchRecipes(params: URLSearchParams): Promise<RecipeSumm
             if (!recipeIds) return [];
             
             const bulkUrl = `${SPOONACULAR_API_URL}/recipes/informationBulk?ids=${recipeIds}&includeNutrition=true&apiKey=${apiKey}`;
-            const detailedRecipes = await fetchWithCache<any[]>(bulkUrl, [`bulk-${recipeIds}`]);
+            const detailedRecipes = await fetchWithCache<any[]>(bulkUrl, true);
             
             return detailedRecipes.map(transformToRecipeSummary);
         }
@@ -240,7 +245,7 @@ export async function getIngredientSubstitutions(ingredientName: string): Promis
     const apiKey = getApiKey();
     const url = `${SPOONACULAR_API_URL}/food/ingredients/substitutes?ingredientName=${ingredientName}&apiKey=${apiKey}`;
     try {
-        return await fetchWithCache<IngredientSubstitution>(url, [`substitutes-${ingredientName}`]);
+        return await fetchWithCache<IngredientSubstitution>(url, true); // Cache substitutions
     } catch(error) {
         console.error(`Failed to fetch substitutions for ${ingredientName}:`, error);
         throw error;
