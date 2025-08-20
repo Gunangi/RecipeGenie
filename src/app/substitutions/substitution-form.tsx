@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -115,7 +116,7 @@ export function SubstitutionForm() {
             <CardDescription>{result.message}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-             {result.substitutes.length > 0 ? (
+             {result.substitutes && result.substitutes.length > 0 ? (
                 <ul className="list-disc list-inside space-y-1">
                     {result.substitutes.map((sub, index) => (
                     <li key={index} className="capitalize">{sub}</li>
