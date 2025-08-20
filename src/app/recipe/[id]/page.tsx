@@ -1,5 +1,3 @@
-
-
 import { Header } from '@/components/header';
 import { getRecipeDetails } from '@/lib/spoonacular';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -49,7 +47,7 @@ export default async function RecipePage({ params }: { params: { id: string } })
                  <div className="grid grid-cols-1 md:grid-cols-2">
                     <div className="p-6 flex flex-col justify-between">
                          <div>
-                            <Badge variant="outline" className="border-primary text-primary w-fit mb-4">{recipe.dishTypes[0] || 'Recipe'}</Badge>
+                            {recipe.dishTypes && recipe.dishTypes.length > 0 && <Badge variant="outline" className="border-primary text-primary w-fit mb-4">{recipe.dishTypes[0]}</Badge>}
                             <CardTitle className="font-headline text-4xl">{recipe.title}</CardTitle>
                             {recipe.spoonacularScore && recipe.spoonacularScore > 0 && (
                                 <div className="flex items-center gap-2 mt-2">

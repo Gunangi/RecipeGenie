@@ -5,14 +5,14 @@ import { useState, useEffect, Suspense } from 'react';
 import { Header } from '@/components/header';
 import { RecipeCard } from '@/components/recipe-card';
 import { getRecipeDetails } from '@/lib/spoonacular';
-import type { RecipeSummary } from '@/lib/types';
+import type { RecipeWithDetails } from '@/lib/types';
 import { useFavorites } from '@/hooks/use-favorites';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Heart } from 'lucide-react';
 
 function FavoritesPageComponent() {
   const { favorites: favoriteIds } = useFavorites();
-  const [favoriteRecipes, setFavoriteRecipes] = useState<RecipeSummary[]>([]);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<RecipeWithDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,7 @@ function FavoritesPageComponent() {
       try {
         const recipePromises = favoriteIds.map(id => getRecipeDetails(String(id)));
         const results = await Promise.all(recipePromises);
-        const validRecipes = results.filter((r): r is RecipeSummary => r !== null);
+        const validRecipes = results.filter((r): r is RecipeWithDetails => r !== null);
         setFavoriteRecipes(validRecipes);
       } catch (err) {
         console.error(err);

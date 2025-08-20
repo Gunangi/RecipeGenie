@@ -26,19 +26,27 @@ export default function MenusPage() {
          </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-12">
-            {occasionMenus.map(menu => (
-                <Link key={menu.name} href={`/recipes?${new URLSearchParams(menu.query).toString()}`}>
-                    <Card className="shadow-lg hover:shadow-xl transition-shadow h-full">
-                        <CardHeader>
-                            <CardTitle className="font-headline text-2xl">{menu.name}</CardTitle>
-                            <CardDescription>{menu.description}</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-primary font-semibold">Explore Menus &rarr;</p>
-                        </CardContent>
-                    </Card>
-                 </Link>
-            ))}
+            {occasionMenus.map(menu => {
+                const queryParams = new URLSearchParams();
+                Object.entries(menu.query).forEach(([key, value]) => {
+                    if (value !== undefined) {
+                        queryParams.set(key, value);
+                    }
+                });
+                return (
+                    <Link key={menu.name} href={`/recipes?${queryParams.toString()}`}>
+                        <Card className="shadow-lg hover:shadow-xl transition-shadow h-full">
+                            <CardHeader>
+                                <CardTitle className="font-headline text-2xl">{menu.name}</CardTitle>
+                                <CardDescription>{menu.description}</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-primary font-semibold">Explore Menus &rarr;</p>
+                            </CardContent>
+                        </Card>
+                    </Link>
+                )
+            })}
         </div>
       </main>
     </div>
