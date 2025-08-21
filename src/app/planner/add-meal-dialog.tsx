@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -37,7 +36,8 @@ export function AddMealDialog({ isOpen, onClose, onAddMeal, mealType }: AddMealD
       const handler = setTimeout(() => {
         setLoading(true);
         setError(null);
-        const params = new URLSearchParams({ query: searchTerm, type: mealType.toLowerCase() });
+        // Removed the restrictive 'type' parameter from the search
+        const params = new URLSearchParams({ query: searchTerm });
         searchRecipes(params)
           .then(setRecipes)
           .catch(() => setError('Failed to fetch recipes.'))

@@ -1,4 +1,3 @@
-
 import { Header } from '@/components/header';
 import { getRecipeDetails } from '@/lib/spoonacular';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
