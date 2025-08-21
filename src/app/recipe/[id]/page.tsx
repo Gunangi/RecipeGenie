@@ -1,3 +1,4 @@
+
 import { Header } from '@/components/header';
 import { getRecipeDetails } from '@/lib/spoonacular';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,10 +9,23 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import type { RecipeSummary } from '@/lib/types';
+import type { RecipeSummary, RecipeWithDetails } from '@/lib/types';
 import { StarRating } from '@/components/star-rating';
 
-export default async function RecipePage({ params }: { params: { id: string } }) {
+const spiceLevelColors = {
+  None: 'text-muted-foreground',
+  Mild: 'text-yellow-500',
+  Medium: 'text-orange-500',
+  Spicy: 'text-red-500',
+};
+
+const dietaryClassificationIcons = {
+  'Vegan': <Leaf className="w-6 h-6 text-green-500" />,
+  'Veg': <Sprout className="w-6 h-6 text-green-500" />,
+  'Non-Veg': <Fish className="w-6 h-6 text-red-500" />,
+};
+
+export default async function RecipePage({ params }: { params: { id: string } }): Promise<JSX.Element> {
   const recipe = await getRecipeDetails(params.id);
 
   if (!recipe) {
@@ -23,19 +37,6 @@ export default async function RecipePage({ params }: { params: { id: string } })
             </main>
       </div>
     );
-  }
-  
-  const spiceLevelColors: Record<NonNullable<RecipeSummary['spiceLevel']>, string> = {
-    None: 'text-muted-foreground',
-    Mild: 'text-yellow-500',
-    Medium: 'text-orange-500',
-    Spicy: 'text-red-500',
-  };
-
-  const dietaryClassificationIcons: Record<NonNullable<RecipeSummary['dietaryClassification']>, React.ReactNode> = {
-    'Vegan': <Leaf className="w-6 h-6 text-green-500" />,
-    'Veg': <Sprout className="w-6 h-6 text-green-500" />,
-    'Non-Veg': <Fish className="w-6 h-6 text-red-500" />,
   }
 
   return (
@@ -87,7 +88,7 @@ export default async function RecipePage({ params }: { params: { id: string } })
                                 )}
                                 {recipe.spiceLevel && recipe.spiceLevel !== 'None' && (
                                 <div className="flex items-center flex-col gap-1 text-sm text-muted-foreground">
-                                    <Flame className={cn("h-6 w-6", spiceLevelColors[recipe.spiceLevel])} />
+                                    <Flame className={cn("h-6 w-6", spiceLevelColors[recipe.spiceLevel as keyof typeof spiceLevelColors])} />
                                     <span className='font-bold text-foreground text-base'>{recipe.spiceLevel}</span>
                                     <span>Spice Level</span>
                                 </div>

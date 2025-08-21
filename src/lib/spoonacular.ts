@@ -190,6 +190,7 @@ export async function searchRecipes(params: URLSearchParams): Promise<RecipeSumm
     const localParams = new URLSearchParams(params); // Create a copy to modify
     localParams.set('apiKey', apiKey);
     localParams.set('number', '10');
+    // Always fetch full information to get all details for the cards
     localParams.set('addRecipeInformation', 'true');
 
     const query = localParams.get('query');
